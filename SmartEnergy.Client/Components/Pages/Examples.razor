@@ -1,0 +1,99 @@
+@page "/examples"
+
+<PageTitle>Voorbeelden</PageTitle>
+
+<h1>Voorbeelden</h1>
+<p>
+	Deze pagina bevat voorbeelden van invoervelden en hoe je de waarde van een invoerveld
+	kunt verwerken in je algoritme. Je kunt dit gebruiken om je pagina te realiseren. Je bent <em>niet</em> 
+	verplicht je aan deze voorbeelden te houden.
+</p>
+
+<h2>Invoervelden</h2>
+
+<EditForm Model="Form" OnValidSubmit="HandleValidSubmit" FormName="example-form">
+	<div class="form-group mt-4 col-4">
+		<label for="inputGetalInvoer">Getal invoerveld</label>
+		<InputNumber class="form-control" id="inputGetalInvoer" placeholder="Voer een getal in"
+			@bind-Value="Form!.InputNumber" />
+
+	</div>
+
+	<div class="form-group mt-4 col-4">
+		<label for="inputTekstInvoer">Tekst invoerveld</label>
+		<InputText class="form-control" id="inputTekstInvoer" placeholder="Voer een tekst in"
+			@bind-Value="Form!.InputText" />
+
+	</div>
+
+	<div class="form-group mt-4 col-4">
+		<label for="inputDatumInvoer">Datum invoerveld</label>
+		<InputDate class="form-control" id="inputDatumInvoer" placeholder="Voer een datum in"
+			@bind-Value="Form!.InputDate" />
+
+	</div>
+
+	<div class="form-group mt-4 col-4">
+		<label for="inputSelect">Dropdown</label>
+		<InputSelect class="form-select" id="inputSelect" @bind-Value="Form!.Dropdown">
+			<option value="">Selecteer ...</option>
+			<option value="1d">1 dag</option>
+			<option value="1h">1 uur</option>
+			<option value="20s">20 seconden</option>
+		</InputSelect>
+	</div>
+
+	<button type="submit" class="btn btn-success mt-3">POST formulier</button>
+</EditForm>
+
+@if (Form != null)
+{
+	<div class="mt-4">
+		<h4>Geplaatste waarden:</h4>
+		<ul>
+			<li>Getal: @Form.InputNumber</li>
+			<li>Tekst: @Form.InputText</li>
+			<li>Datum: @Form.InputDate</li>
+			<li>Dropdown: @Form.Dropdown</li>
+
+		</ul>
+	</div>
+}
+
+@code {
+	[SupplyParameterFromForm]
+	private ExampleForm? Form { get; set; }
+
+	protected override void OnInitialized()
+	{
+
+		// Initialize the form with default values
+		if (Form == null)
+		{
+			Form = new ExampleForm();
+			Form.Dropdown = "1h"; // Example of a default value
+			Form.InputDate = DateTime.Today;
+		}
+	}
+
+
+
+	/// <summary>
+	/// This method is executed when the FORM is posted
+	/// </summary>
+	void HandleValidSubmit()
+	{
+		Debug.WriteLine("Form posted!");
+	}
+
+	/// <summary>
+	/// Represents the data entered in the example form.
+	/// </summary>
+	public class ExampleForm
+	{
+		public int InputNumber { get; set; }
+		public string? InputText { get; set; }
+		public DateTime? InputDate { get; set; }
+		public string? Dropdown { get; set; }
+	}
+}

@@ -1,0 +1,55 @@
+﻿@page "/assignment"
+@inject InfluxMeasurementRepository measurementRepository;
+@inject SmartMeterConfiguration smartMeterConfiguration;
+
+
+<PageTitle>Opdracht [LETTER]</PageTitle>
+
+<h1>Opdracht [LETTER]</h1>
+
+<p>
+	Werk hier jouw opdracht uit. Schrijf het algoritme en toon de gewenste resultaten op deze pagina.
+</p>
+
+<EditForm Model="Form" OnValidSubmit="HandleValidSubmit" FormName="your-form">
+	@* Enter your form elements here as input for your algorithm. *@
+</EditForm>
+
+<hr />
+
+@* The output of your algoritm here *@
+
+
+@code {
+	[SupplyParameterFromForm]
+	private YourForm? Form { get; set; }
+
+	/// <summary>
+	/// This method is executed when the page is loaded!
+	/// </summary>
+	protected override void OnInitialized()
+	{
+		Debug.WriteLine("Page loaded!");
+
+		// Initialize form with default values
+		if (Form == null)
+		{
+			Form = new YourForm();
+		}
+	}
+
+	/// <summary>
+	/// This method is executed when the FORM is posted
+	/// </summary>
+	public void HandleValidSubmit()
+	{
+		Debug.WriteLine("Form posted!");
+
+		// Your algorithm here.
+	}
+
+	public class YourForm
+	{
+		// Enter the desired form values here (check the example page on how to make this work)
+	}
+}

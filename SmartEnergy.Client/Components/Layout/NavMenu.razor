@@ -1,0 +1,61 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">SmartEnergy.Client</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="assignment">
+                <span class="bi bi-pencil-fill-nav-menu" aria-hidden="true"></span> Opdracht
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="examples">
+                <span class="bi bi-search-fill-nav-menu" aria-hidden="true"></span> Voorbeelden
+            </NavLink>
+        </div>
+
+        <hr />
+
+        <div class="nav-item px-3">
+            <span class="nav-link"><strong>Datasets</strong></span>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="energyconsumed">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Energy consumed
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="energyproduced">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Energy produced
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="gasdelivered">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Gas delivered
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="power">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Power
+            </NavLink>
+        </div>
+
+    </nav>
+</div>
+

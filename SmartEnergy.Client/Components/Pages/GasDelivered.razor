@@ -1,0 +1,73 @@
+﻿@page "/gasdelivered"
+@attribute [StreamRendering]
+@inject InfluxMeasurementRepository measurementRepository;
+@inject SmartMeterConfiguration smartMeterConfiguration;
+
+<PageTitle>Gas delivered</PageTitle>
+
+<h1>Gas delivered</h1>
+
+<p>
+    Dit overzicht toont de meterstanden van het aantal kubieke meter gas dat is geleverd sinds de installatie van de meter.
+    De waarden zijn cumulatief, wat betekent dat iedere meting gelijk is aan of hoger dan de vorige.
+    Het verschil tussen twee opeenvolgende meterstanden geeft het gasverbruik in die specifieke periode aan.
+</p>
+
+@if (measurements != null)
+{
+    <!--
+        When the measurements variable has values in it we will draw a table with a header (thead) and
+        add the data to the table (tbody). We use the foreach to loop over te list of measurements and
+        a single line <tr> is added for each of the indivudial measurement objects. Colums are seperated
+        using <th> for the header or <td> for the body as you can see in the code below.
+    -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Timestamp (UTC)</th>
+                <th>Location ID</th>
+                <th>Sensor</th>
+                <th>Value</th>
+                <th>Unit</th>
+                <th>Price</th>
+                <th>Temperature</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var measurement in measurements)
+            {
+                <tr>
+                    <td>@measurement.Timestamp</td>
+                    <td>@measurement.LocationId</td>
+                    <td>@measurement.Sensor</td>
+                    <td>@measurement.Value</td>
+                    <td>@measurement.Unit</td>
+                    <td>@measurement.EnergyPrice</td>
+                    <td>@measurement.Temperature</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    /* This is where all the magic happens. During the page load the OnInitialized method is
+    executed and the measurementRepository is used to retrieve the data from the Influx Database.
+    Feel free to adapt the code and tweak this to your needs. */
+
+    private List<Measurement>? measurements;
+
+    protected override void OnInitialized()
+    {
+        /* Number of days to retrieve, adjust according to your needs/requirements. */
+        int numberOfDays = 3;
+
+        /* The time window to summarize the data. Examples are 20s (20 seconds), 5m (5 minutes) or 1h (1 hour). The
+        smaller the value you set the more records and details you will retrieve from the meter. But it will also take
+        longer to render your razor page. So choose the value wisely! Note: Anything smaller than 20 seconds has no
+        effect, since the P1 meter only collects the data every 20 seconds. */
+        string aggregateWindow = "5m";
+
+        measurements = this.measurementRepository.GetGasDelivered(smartMeterConfiguration.MeterId, numberOfDays, aggregateWindow);
+    }
+}
