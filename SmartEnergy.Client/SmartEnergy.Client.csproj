@@ -11,4 +11,8 @@
     <ProjectReference Include="..\SmartEnergy.Library\SmartEnergy.Library.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="InfluxDB.Client" Version="4.18.0" />
+  </ItemGroup>
+
 </Project>

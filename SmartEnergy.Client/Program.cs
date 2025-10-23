@@ -15,7 +15,7 @@ public static class Program
         P1 meter is a Hexadecimal number. Thus you need to convert the ID from HEX to Decimal and put the number here. */
         var smartMeterConfiguration = new SmartMeterConfiguration
         {
-            MeterId = 1078608
+            MeterId = 5341726
         };
 
         // Add services to the container.
@@ -32,10 +32,10 @@ public static class Program
             })
             .AddSingleton<SmartMeterConfiguration>(o => smartMeterConfiguration)
             .AddTransient<InfluxMeasurementRepository>()
-            .AddRazorComponents();
-            //.AddInteractiveServerComponents(); <-- Uncomment if you want to play around with other blazor rendering modes
-            
-            
+            .AddRazorComponents()
+            .AddInteractiveServerComponents();
+
+
 
         var app = builder.Build();
 
@@ -55,11 +55,11 @@ public static class Program
         app.UseStaticFiles();
         app.UseAntiforgery();
 
-        app.MapRazorComponents<App>();
-            //.AddInteractiveServerRenderMode(); <-- Uncomment if you want to play around with other blazor rendering modes
+        app.MapRazorComponents<App>()
+        .AddInteractiveServerRenderMode();
         app.Run();
-        
-        
+
+
     }
 
     /// <summary>
