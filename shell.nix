@@ -3,18 +3,18 @@
 pkgs.mkShell {
   buildInputs = with pkgs; [
     # .NET SDK (includes runtime and CLI tools)
-    dotnet-sdk
-    dotnet-runtime
+    dotnet-sdk_9
+    dotnet-runtime_9
 
     # Additional development tools
     nuget
     omnisharp-roslyn  # Language server for editors
-    
+
     # Optional but useful
     git
     curl
     wget
-    
+
     # For debugging and profiling
     gdb
     valgrind
@@ -25,13 +25,13 @@ pkgs.mkShell {
   shellHook = ''
     # Disable .NET telemetry
     export DOTNET_CLI_TELEMETRY_OPTOUT=1
-    
+
     # Set up NuGet config to use system packages when possible
     export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
-    
+
     # Improve build performance
     export DOTNET_CLI_UI_LANGUAGE=en-US
-    
+
     echo "🚀 .NET development environment ready!"
     echo "📦 .NET SDK version: $(dotnet --version)"
 
