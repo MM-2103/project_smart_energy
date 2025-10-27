@@ -1,28 +1,246 @@
-﻿@page "/assignment"
+@page "/assignment"
 @inject InfluxMeasurementRepository measurementRepository;
 @inject SmartMeterConfiguration smartMeterConfiguration;
-
+@inject ChartService ChartService
+@using System.Diagnostics
+@using SmartEnergy.Library.Measurements.Models
+@using SmartEnergy.Client.Services
 
 <PageTitle>Opdracht Variant D</PageTitle>
 
-<h1>Opdracht Variant D</h1>
+<h1>Mehsen Menem</h1>
 
 <p>
-	Werk hier jouw opdracht uit. Schrijf het algoritme en toon de gewenste resultaten op deze pagina.
+Opdracht Variant D
 </p>
 
 <EditForm Model="Form" OnValidSubmit="HandleValidSubmit" FormName="your-form">
-	@* Enter your form elements here as input for your algorithm. *@
+	<div class="mb-3">
+		<label for="meterId" class="form-label">Meter ID:</label>
+		<InputNumber id="meterId" class="form-control" @bind-Value="Form!.MeterId" />
+	</div>
+	<div class="mb-3">
+		<label for="days" class="form-label">Days to retrieve:</label>
+		<InputNumber id="days" class="form-control" @bind-Value="Form.DaysToRetrieve" min="1" max="90" />
+	</div>
+	<div class="mb-3">
+		<label for="fixedPrice" class="form-label">Fixed Price (€/kWh):</label>
+		<InputNumber id="fixedPrice" class="form-control" @bind-Value="Form.FixedPrice" step="0.01" min="0.1" max="1.0" />
+	</div>
+	<button type="submit" class="btn btn-primary">Load Data</button>
 </EditForm>
 
 <hr />
 
-@* The output of your algoritm here *@
+<h3>Energy Consumed</h3>
+@if (EnergyConsumedData != null && EnergyConsumedData.Any())
+{
+	<table class="table table-sm">
+		<thead>
+			<tr>
+				<th>Timestamp</th>
+				<th>Value</th>
+				<th>Unit</th>
+				<th>Energy Price</th>
+				<th>Temperature</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var measurement in EnergyConsumedData.Take(10))
+			{
+				<tr>
+					<td>@measurement.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+					<td>@measurement.Value</td>
+					<td>@measurement.Unit</td>
+					<td>@measurement.EnergyPrice</td>
+					<td>@measurement.Temperature</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	<p><em>Showing first 10 of @EnergyConsumedData.Count records</em></p>
+}
+else
+{
+	<p>No energy consumed data available.</p>
+}
+
+<h3>Energy Produced</h3>
+@if (EnergyProducedData != null && EnergyProducedData.Any())
+{
+	<table class="table table-sm">
+		<thead>
+			<tr>
+				<th>Timestamp</th>
+				<th>Value</th>
+				<th>Unit</th>
+				<th>Energy Price</th>
+				<th>Temperature</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var measurement in EnergyProducedData.Take(10))
+			{
+				<tr>
+					<td>@measurement.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+					<td>@measurement.Value</td>
+					<td>@measurement.Unit</td>
+					<td>@measurement.EnergyPrice</td>
+					<td>@measurement.Temperature</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	<p><em>Showing first 10 of @EnergyProducedData.Count records</em></p>
+}
+else
+{
+	<p>No energy produced data available.</p>
+}
+
+<h3>Power</h3>
+@if (PowerData != null && PowerData.Any())
+{
+	<table class="table table-sm">
+		<thead>
+			<tr>
+				<th>Timestamp</th>
+				<th>Value</th>
+				<th>Unit</th>
+				<th>Energy Price</th>
+				<th>Temperature</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var measurement in PowerData.Take(10))
+			{
+				<tr>
+					<td>@measurement.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+					<td>@measurement.Value</td>
+					<td>@measurement.Unit</td>
+					<td>@measurement.EnergyPrice</td>
+					<td>@measurement.Temperature</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	<p><em>Showing first 10 of @PowerData.Count records</em></p>
+}
+else
+{
+	<p>No power data available.</p>
+}
+
+<h3>Gas Delivered</h3>
+@if (GasDeliveredData != null && GasDeliveredData.Any())
+{
+	<table class="table table-sm">
+		<thead>
+			<tr>
+				<th>Timestamp</th>
+				<th>Value</th>
+				<th>Unit</th>
+				<th>Energy Price</th>
+				<th>Temperature</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var measurement in GasDeliveredData.Take(10))
+			{
+				<tr>
+					<td>@measurement.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+					<td>@measurement.Value</td>
+					<td>@measurement.Unit</td>
+					<td>@measurement.EnergyPrice</td>
+					<td>@measurement.Temperature</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	<p><em>Showing first 10 of @GasDeliveredData.Count records</em></p>
+}
+else
+{
+	<p>No gas delivered data available.</p>
+}
+
+<h3>📊 Cost Analysis Charts</h3>
+
+@if (DailyCostData != null && DailyCostData.Any())
+{
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Daily Cost Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="costComparisonChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Daily Energy Consumption</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="consumptionChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Total Cost Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h4>€@TotalDynamicCost.ToString("F2")</h4>
+                            <p class="text-muted">Dynamic Tariff</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>€@TotalFixedCost.ToString("F2")</h4>
+                            <p class="text-muted">Fixed Tariff (€@FixedPrice.ToString("F2")/kWh)</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>€@TotalSavings.ToString("F2")</h4>
+                            <p class="text-success">Savings</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>@SavingsPercentage.ToString("F1")%</h4>
+                            <p class="text-success">Savings %</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 
 @code {
 	[SupplyParameterFromForm]
 	private YourForm? Form { get; set; }
+
+	private List<Measurement>? EnergyConsumedData { get; set; }
+	private List<Measurement>? EnergyProducedData { get; set; }
+	private List<Measurement>? PowerData { get; set; }
+	private List<Measurement>? GasDeliveredData { get; set; }
+	
+	// Chart-related properties
+	private IJSObjectReference? CostComparisonChart { get; set; }
+	private IJSObjectReference? ConsumptionChart { get; set; }
+	private List<DailyCostAnalysis>? DailyCostData { get; set; }
+	private double TotalDynamicCost { get; set; }
+	private double TotalFixedCost { get; set; }
+	private double TotalSavings { get; set; }
+	private double SavingsPercentage { get; set; }
+	private double FixedPrice => Form?.FixedPrice ?? 0.25; 
 
 	/// <summary>
 	/// This method is executed when the page is loaded!
@@ -41,15 +259,205 @@
 	/// <summary>
 	/// This method is executed when the FORM is posted
 	/// </summary>
-	public void HandleValidSubmit()
+	public async Task HandleValidSubmit()
 	{
 		Debug.WriteLine("Form posted!");
+		Debug.WriteLine($"Loading data for meter {Form!.MeterId} for {Form.DaysToRetrieve} days");
 
-		// Your algorithm here.
+		try
+		{
+			// Load all types of data
+			EnergyConsumedData = measurementRepository.GetEnergyConsumed(Form.MeterId, Form.DaysToRetrieve, "1h");
+			EnergyProducedData = measurementRepository.GetEnergyProduced(Form.MeterId, Form.DaysToRetrieve, "1h");
+			PowerData = measurementRepository.GetPower(Form.MeterId, Form.DaysToRetrieve, "1h");
+			GasDeliveredData = measurementRepository.GetGasDelivered(Form.MeterId, Form.DaysToRetrieve, "1h");
+			
+			// Use PowerData for the main analysis (this gives us kW readings like Grafana)
+			Debug.WriteLine("Using PowerData for analysis (like Grafana dashboard)");
+
+			Debug.WriteLine($"Loaded {EnergyConsumedData?.Count ?? 0} energy consumed records");
+			Debug.WriteLine($"Loaded {EnergyProducedData?.Count ?? 0} energy produced records");
+			Debug.WriteLine($"Loaded {PowerData?.Count ?? 0} power records");
+			Debug.WriteLine($"Loaded {GasDeliveredData?.Count ?? 0} gas delivered records");
+			
+			// Perform cost analysis and create charts
+			await PerformCostAnalysis();
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"Error loading data: {ex.Message}");
+		}
+	}
+	
+	private async Task PerformCostAnalysis()
+	{
+		// Use PowerData instead of EnergyConsumedData (like Grafana dashboard)
+		if (PowerData == null || !PowerData.Any())
+		{
+			Debug.WriteLine("No power data available for analysis");
+			return;
+		}
+		
+		// DEBUG: Let's examine the power data to confirm it matches Grafana
+		Debug.WriteLine($"=== POWER DATA INVESTIGATION ===");
+		Debug.WriteLine($"Total power records: {PowerData.Count}");
+		var samplePowerData = PowerData.Take(10);
+		foreach (var item in samplePowerData)
+		{
+			Debug.WriteLine($"Time: {item.Timestamp:MM-dd HH:mm}, Power: {item.Value} {item.Unit}, Price: {item.EnergyPrice:F4} €/kWh");
+		}
+		
+		// Group by day and calculate energy from power (Power × Time = Energy)
+		// Since we have hourly data: kW × 1 hour = kWh
+		DailyCostData = PowerData
+			.GroupBy(m => m.Timestamp.Date)
+			.Select(g => new DailyCostAnalysis
+			{
+				Date = g.Key,
+				EnergyConsumedKWh = g.Average(m => m.Value) * 24.0, // Average power (kW) × 24 hours = daily energy (kWh)
+				DynamicCost = g.Sum(m => m.Value * m.EnergyPrice), // Sum of (kW × €/kWh × 1 hour) = €
+				FixedCost = g.Sum(m => m.Value * FixedPrice) // Sum of (kW × €/kWh × 1 hour) = €
+			})
+			.OrderBy(d => d.Date)
+			.ToList();
+		
+		// Calculate cost totals
+		TotalDynamicCost = DailyCostData.Sum(d => d.DynamicCost);
+		TotalFixedCost = DailyCostData.Sum(d => d.FixedCost);
+		TotalSavings = TotalFixedCost - TotalDynamicCost;
+		SavingsPercentage = TotalFixedCost > 0 ? (TotalSavings / TotalFixedCost) * 100 : 0;
+		
+		// Validate the results
+		Debug.WriteLine($"=== POWER TO ENERGY CONVERSION RESULTS ===");
+		foreach (var day in DailyCostData.Take(5))
+		{
+			var dayPowerData = PowerData.Where(m => m.Timestamp.Date == day.Date);
+			var avgPower = dayPowerData.Average(m => m.Value);
+			var minPower = dayPowerData.Min(m => m.Value);
+			var maxPower = dayPowerData.Max(m => m.Value);
+			
+			Debug.WriteLine($"Date: {day.Date:yyyy-MM-dd}, Avg Power: {avgPower:F2} kW, Daily Energy: {day.EnergyConsumedKWh:F2} kWh");
+			Debug.WriteLine($"  Power range: {minPower:F2} - {maxPower:F2} kW");
+		}
+		
+		Debug.WriteLine($"=== COST ANALYSIS RESULTS ===");
+		Debug.WriteLine($"Total Dynamic Cost: €{TotalDynamicCost:F2}");
+		Debug.WriteLine($"Total Fixed Cost: €{TotalFixedCost:F2}");
+		Debug.WriteLine($"Total Savings: €{TotalSavings:F2} ({SavingsPercentage:F1}%)");
+		Debug.WriteLine($"Power to energy conversion completed: {DailyCostData.Count} days, total {DailyCostData.Sum(d => d.EnergyConsumedKWh):F2} kWh");
+		Debug.WriteLine($"Average daily energy: {DailyCostData.Average(d => d.EnergyConsumedKWh):F2} kWh/day");
+		
+		// Sanity check - warn if numbers seem too high
+		var totalKWh = DailyCostData.Sum(d => d.EnergyConsumedKWh);
+		var avgDailyKWh = DailyCostData.Average(d => d.EnergyConsumedKWh);
+		if (totalKWh > 1000) // More than 1000 kWh for the period seems high
+		{
+			Debug.WriteLine($"WARNING: Total energy consumption ({totalKWh:F0} kWh) seems very high for {DailyCostData.Count} days");
+		}
+		if (avgDailyKWh > 100) // More than 100 kWh per day seems high
+		{
+			Debug.WriteLine($"WARNING: Average daily consumption ({avgDailyKWh:F0} kWh/day) seems very high");
+		}
+		
+		// Create charts
+		await CreateCharts();
+	}
+	
+	private async Task CreateCharts()
+	{
+		if (DailyCostData == null || !DailyCostData.Any()) return;
+		
+		// Destroy existing charts
+		if (CostComparisonChart != null)
+		{
+			await ChartService.DestroyChartAsync(CostComparisonChart);
+		}
+		if (ConsumptionChart != null)
+		{
+			await ChartService.DestroyChartAsync(ConsumptionChart);
+		}
+		
+		// Create cost comparison chart
+		var costChartData = new LineChartData
+		{
+			Title = "Daily Cost Comparison",
+			XAxisLabel = "Date",
+			YAxisLabel = "Cost (€)",
+			Labels = DailyCostData.Select(d => d.Date.ToString("MM/dd")).ToList(),
+			Dataset1Label = "Dynamic Tariff",
+			Dataset1Data = DailyCostData.Select(d => d.DynamicCost).ToList(),
+			Dataset2Label = $"Fixed Tariff (€{FixedPrice:F2}/kWh)",
+			Dataset2Data = DailyCostData.Select(d => d.FixedCost).ToList()
+		};
+		
+		CostComparisonChart = await ChartService.CreateLineChartAsync("costComparisonChart", costChartData);
+		
+		// Create consumption chart
+		var consumptionChartData = new BarChartData
+		{
+			Title = "Daily Energy Consumption (from Power Data)",
+			XAxisLabel = "Date",
+			YAxisLabel = "Energy (kWh)",
+			Labels = DailyCostData.Select(d => d.Date.ToString("MM/dd")).ToList(),
+			DatasetLabel = "Daily Energy (kWh)",
+			Data = DailyCostData.Select(d => d.EnergyConsumedKWh).ToList()
+		};
+		
+		ConsumptionChart = await ChartService.CreateBarChartAsync("consumptionChart", consumptionChartData);
 	}
 
 	public class YourForm
 	{
-		// Enter the desired form values here (check the example page on how to make this work)
+		public int MeterId { get; set; } = 1; // Default meter ID
+		public int DaysToRetrieve { get; set; } = 1; // Default to 1 day
+		public double FixedPrice { get; set; } = 0.25; // Default €0.25 per kWh
+	}
+	
+	public class DailyCostAnalysis
+	{
+		public DateTime Date { get; set; }
+		public double EnergyConsumedKWh { get; set; }
+		public double DynamicCost { get; set; }
+		public double FixedCost { get; set; }
+	}
+	
+	/// <summary>
+	/// Formats power values for display (mimics what you see in the UI)
+	/// </summary>
+	private string FormatForDisplay(double watts, Unit unit)
+	{
+		if (unit != Unit.Watt) return $"{watts} {unit}";
+		
+		// For Watts, format based on magnitude like the UI does
+		if (watts >= 1000)
+		{
+			return $"{watts / 1000.0:F2} kW";
+		}
+		else
+		{
+			return $"{watts:F0} W";
+		}
+	}
+	
+	/// <summary>
+	/// Normalizes energy values to Watts regardless of the display unit
+	/// </summary>
+	private double NormalizeToWatts(double value, Unit unit)
+	{
+		// The issue: The display shows different units (kW, W) but the raw Value is always in Watts
+		// For energy consumed data, the unit should be Watt, but we need to verify this
+		
+		if (unit == Unit.Watt)
+		{
+			return value; // Already in Watts - this is what we expect for power consumption
+		}
+		else if (unit == Unit.KilowattHour)
+		{
+			// This would be energy (kWh), but for hourly data we should have power (W)
+			// If we somehow get kWh, we need to handle this differently
+			return value * 1000.0; // Convert kWh to Wh, but this shouldn't happen for power data
+		}
+		
+		return value; // Default: assume Watts
 	}
 }
