@@ -33,6 +33,7 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 obj
+node_modules/
 
 # Visual Studio 2015
 .vs/
