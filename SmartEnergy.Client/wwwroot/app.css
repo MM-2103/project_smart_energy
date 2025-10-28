@@ -24,12 +24,6 @@ h1:focus {
     outline: none;
 }
 
-.navbar-dark,
-.nav-scrollable,
-.top-row {
-    background-color: red;
-}
-
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }

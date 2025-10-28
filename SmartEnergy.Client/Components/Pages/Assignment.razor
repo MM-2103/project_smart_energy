@@ -9,9 +9,23 @@
 
 <h1>Mehsen Menem</h1>
 
-<p>
-Opdracht Variant D
-</p>
+<div class="alert alert-info">
+	<h4>📊 Cost Analysis: Dynamic vs Fixed Energy Tariffs</h4>
+	<p>
+		This analysis compares the cost of electricity consumption using <strong>dynamic hourly tariffs</strong> 
+		versus a <strong>fixed tariff</strong> over a user-defined period.
+	</p>
+	<p><strong>How it works:</strong></p>
+	<ul>
+		<li>Hourly power consumption data (in Watts) is retrieved from your smart meter</li>
+		<li>Power values are converted to kilowatts (kW) and summed per day to calculate daily energy consumption (kWh)</li>
+		<li>For dynamic tariffs: Each hour's energy is multiplied by its specific hourly price (€/kWh)</li>
+		<li>For fixed tariffs: All energy is multiplied by your chosen fixed price (default €0.25/kWh)</li>
+		<li>The results show potential savings when using dynamic pricing to consume energy during cheaper hours</li>
+	</ul>
+</div>
+
+<h3>Analysis Parameters</h3>
 
 <EditForm Model="Form" OnValidSubmit="HandleValidSubmit" FormName="your-form">
 	<div class="mb-3">
@@ -323,7 +337,7 @@ else
 			return;
 		}
 		
-		// DEBUG: Let's examine the power data to confirm it matches Grafana
+		// DEBUG: examine the power data to confirm it matches Grafana
 		Debug.WriteLine($"=== POWER DATA INVESTIGATION ===");
 		Debug.WriteLine($"Total power records: {PowerData.Count}");
 		var samplePowerData = PowerData.Take(10);
@@ -332,6 +346,15 @@ else
 			Debug.WriteLine($"Time: {item.Timestamp:MM-dd HH:mm}, Power: {item.Value} {item.Unit}, Price: {item.EnergyPrice:F4} €/kWh");
 		}
 		
+		// Check if data is in Watts or Kilowatts
+		var avgValue = PowerData.Average(m => m.Value);
+		var isWatts = avgValue > 100; // If average > 100, likely Watts not kW
+		Debug.WriteLine($"Average power value: {avgValue:F2}, Unit: {PowerData.First().Unit}");
+		Debug.WriteLine($"Detected unit: {(isWatts ? "Watts (W)" : "Kilowatts (kW)")}");
+		
+		// Convert to kW if needed
+		var powerToKW = isWatts ? 1.0 / 1000.0 : 1.0;
+		
 		// Group by day and calculate energy from power (Power × Time = Energy)
 		// Since we have hourly data: kW × 1 hour = kWh
 		DailyCostData = PowerData
@@ -339,9 +362,11 @@ else
 			.Select(g => new DailyCostAnalysis
 			{
 				Date = g.Key,
-				EnergyConsumedKWh = g.Average(m => m.Value) * 24.0, // Average power (kW) × 24 hours = daily energy (kWh)
-				DynamicCost = g.Sum(m => m.Value * m.EnergyPrice), // Sum of (kW × €/kWh × 1 hour) = €
-				FixedCost = g.Sum(m => m.Value * FixedPrice) // Sum of (kW × €/kWh × 1 hour) = €
+				// Convert W to kW, then calculate daily energy
+				EnergyConsumedKWh = g.Sum(m => m.Value * powerToKW), // Sum of hourly power (kW × 1h = kWh)
+				// Cost = Energy (kWh) × Price (€/kWh)
+				DynamicCost = g.Sum(m => m.Value * powerToKW * m.EnergyPrice),
+				FixedCost = g.Sum(m => m.Value * powerToKW * FixedPrice)
 			})
 			.OrderBy(d => d.Date)
 			.ToList();
@@ -372,7 +397,7 @@ else
 		Debug.WriteLine($"Power to energy conversion completed: {DailyCostData.Count} days, total {DailyCostData.Sum(d => d.EnergyConsumedKWh):F2} kWh");
 		Debug.WriteLine($"Average daily energy: {DailyCostData.Average(d => d.EnergyConsumedKWh):F2} kWh/day");
 		
-		// Sanity check - warn if numbers seem too high
+		// Warn if numbers seem too high
 		var totalKWh = DailyCostData.Sum(d => d.EnergyConsumedKWh);
 		var avgDailyKWh = DailyCostData.Average(d => d.EnergyConsumedKWh);
 		if (totalKWh > 1000) // More than 1000 kWh for the period seems high
@@ -383,6 +408,7 @@ else
 		{
 			Debug.WriteLine($"WARNING: Average daily consumption ({avgDailyKWh:F0} kWh/day) seems very high");
 		}
+		// Note: had to do this because I had some issues in the begging with values being too high
 	}
 
 	public class YourForm
