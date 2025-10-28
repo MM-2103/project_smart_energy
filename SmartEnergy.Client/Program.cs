@@ -1,6 +1,5 @@
 using InfluxDB.Client;
 using SmartEnergy.Client.Components;
-using SmartEnergy.Client.Services;
 using SmartEnergy.Library.Measurements.Models;
 using SmartEnergy.Library.Measurements.Repository;
 
@@ -33,7 +32,6 @@ public static class Program
             })
             .AddSingleton<SmartMeterConfiguration>(o => smartMeterConfiguration)
             .AddTransient<InfluxMeasurementRepository>()
-            .AddScoped<ChartService>()
             .AddRazorComponents()
             .AddInteractiveServerComponents();
 

@@ -1,10 +1,8 @@
 @page "/assignment"
 @inject InfluxMeasurementRepository measurementRepository;
 @inject SmartMeterConfiguration smartMeterConfiguration;
-@inject ChartService ChartService
 @using System.Diagnostics
 @using SmartEnergy.Library.Measurements.Models
-@using SmartEnergy.Client.Services
 
 <PageTitle>Opdracht Variant D</PageTitle>
 
@@ -175,7 +173,24 @@ else
                     <h5>Daily Cost Comparison</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="costComparisonChart" width="400" height="200"></canvas>
+                    <ApexChart TItem="DailyCostAnalysis"
+                               Title="Daily Cost Comparison"
+                               Options="@costChartOptions">
+                        <ApexPointSeries TItem="DailyCostAnalysis"
+                                         Items="DailyCostData"
+                                         Name="Dynamic Tariff"
+                                         SeriesType="SeriesType.Line"
+                                         XValue="@(e => e.Date.ToString("MM/dd"))"
+                                         YValue="@(e => (decimal)e.DynamicCost)"
+                                         OrderBy="e => e.X" />
+                        <ApexPointSeries TItem="DailyCostAnalysis"
+                                         Items="DailyCostData"
+                                         Name="Fixed Tariff"
+                                         SeriesType="SeriesType.Line"
+                                         XValue="@(e => e.Date.ToString("MM/dd"))"
+                                         YValue="@(e => (decimal)e.FixedCost)"
+                                         OrderBy="e => e.X" />
+                    </ApexChart>
                 </div>
             </div>
         </div>
@@ -185,7 +200,17 @@ else
                     <h5>Daily Energy Consumption</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="consumptionChart" width="400" height="200"></canvas>
+                    <ApexChart TItem="DailyCostAnalysis"
+                               Title="Daily Energy Consumption"
+                               Options="@consumptionChartOptions">
+                        <ApexPointSeries TItem="DailyCostAnalysis"
+                                         Items="DailyCostData"
+                                         Name="Daily Energy (kWh)"
+                                         SeriesType="SeriesType.Bar"
+                                         XValue="@(e => e.Date.ToString("MM/dd"))"
+                                         YValue="@(e => (decimal)e.EnergyConsumedKWh)"
+                                         OrderBy="e => e.X" />
+                    </ApexChart>
                 </div>
             </div>
         </div>
@@ -232,15 +257,26 @@ else
 	private List<Measurement>? PowerData { get; set; }
 	private List<Measurement>? GasDeliveredData { get; set; }
 	
-	// Chart-related properties
-	private IJSObjectReference? CostComparisonChart { get; set; }
-	private IJSObjectReference? ConsumptionChart { get; set; }
 	private List<DailyCostAnalysis>? DailyCostData { get; set; }
 	private double TotalDynamicCost { get; set; }
 	private double TotalFixedCost { get; set; }
 	private double TotalSavings { get; set; }
 	private double SavingsPercentage { get; set; }
-	private double FixedPrice => Form?.FixedPrice ?? 0.25; 
+	private double FixedPrice => Form?.FixedPrice ?? 0.25;
+	
+	private ApexChartOptions<DailyCostAnalysis> costChartOptions = new()
+	{
+		Chart = new Chart { Toolbar = new Toolbar { Show = false } },
+		Yaxis = new List<YAxis> { new YAxis { Title = new AxisTitle { Text = "Cost (€)" } } },
+		Xaxis = new XAxis { Title = new AxisTitle { Text = "Date" } }
+	};
+	
+	private ApexChartOptions<DailyCostAnalysis> consumptionChartOptions = new()
+	{
+		Chart = new Chart { Toolbar = new Toolbar { Show = false } },
+		Yaxis = new List<YAxis> { new YAxis { Title = new AxisTitle { Text = "Energy (kWh)" } } },
+		Xaxis = new XAxis { Title = new AxisTitle { Text = "Date" } }
+	}; 
 
 	/// <summary>
 	/// This method is executed when the page is loaded!
@@ -255,11 +291,13 @@ else
 			Form = new YourForm();
 		}
 	}
+	
+
 
 	/// <summary>
 	/// This method is executed when the FORM is posted
 	/// </summary>
-	public async Task HandleValidSubmit()
+	public void HandleValidSubmit()
 	{
 		Debug.WriteLine("Form posted!");
 		Debug.WriteLine($"Loading data for meter {Form!.MeterId} for {Form.DaysToRetrieve} days");
@@ -280,8 +318,8 @@ else
 			Debug.WriteLine($"Loaded {PowerData?.Count ?? 0} power records");
 			Debug.WriteLine($"Loaded {GasDeliveredData?.Count ?? 0} gas delivered records");
 			
-			// Perform cost analysis and create charts
-			await PerformCostAnalysis();
+			// Perform cost analysis
+			PerformCostAnalysis();
 		}
 		catch (Exception ex)
 		{
@@ -289,7 +327,7 @@ else
 		}
 	}
 	
-	private async Task PerformCostAnalysis()
+	private void PerformCostAnalysis()
 	{
 		// Use PowerData instead of EnergyConsumedData (like Grafana dashboard)
 		if (PowerData == null || !PowerData.Any())
@@ -358,52 +396,6 @@ else
 		{
 			Debug.WriteLine($"WARNING: Average daily consumption ({avgDailyKWh:F0} kWh/day) seems very high");
 		}
-		
-		// Create charts
-		await CreateCharts();
-	}
-	
-	private async Task CreateCharts()
-	{
-		if (DailyCostData == null || !DailyCostData.Any()) return;
-		
-		// Destroy existing charts
-		if (CostComparisonChart != null)
-		{
-			await ChartService.DestroyChartAsync(CostComparisonChart);
-		}
-		if (ConsumptionChart != null)
-		{
-			await ChartService.DestroyChartAsync(ConsumptionChart);
-		}
-		
-		// Create cost comparison chart
-		var costChartData = new LineChartData
-		{
-			Title = "Daily Cost Comparison",
-			XAxisLabel = "Date",
-			YAxisLabel = "Cost (€)",
-			Labels = DailyCostData.Select(d => d.Date.ToString("MM/dd")).ToList(),
-			Dataset1Label = "Dynamic Tariff",
-			Dataset1Data = DailyCostData.Select(d => d.DynamicCost).ToList(),
-			Dataset2Label = $"Fixed Tariff (€{FixedPrice:F2}/kWh)",
-			Dataset2Data = DailyCostData.Select(d => d.FixedCost).ToList()
-		};
-		
-		CostComparisonChart = await ChartService.CreateLineChartAsync("costComparisonChart", costChartData);
-		
-		// Create consumption chart
-		var consumptionChartData = new BarChartData
-		{
-			Title = "Daily Energy Consumption (from Power Data)",
-			XAxisLabel = "Date",
-			YAxisLabel = "Energy (kWh)",
-			Labels = DailyCostData.Select(d => d.Date.ToString("MM/dd")).ToList(),
-			DatasetLabel = "Daily Energy (kWh)",
-			Data = DailyCostData.Select(d => d.EnergyConsumedKWh).ToList()
-		};
-		
-		ConsumptionChart = await ChartService.CreateBarChartAsync("consumptionChart", consumptionChartData);
 	}
 
 	public class YourForm
