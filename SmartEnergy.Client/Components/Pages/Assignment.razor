@@ -1,4 +1,5 @@
 @page "/assignment"
+@rendermode InteractiveServer
 @inject InfluxMeasurementRepository measurementRepository;
 @inject SmartMeterConfiguration smartMeterConfiguration;
 @using System.Diagnostics
@@ -175,7 +176,7 @@ else
                 <div class="card-body">
                     <ApexChart TItem="DailyCostAnalysis"
                                Title="Daily Cost Comparison"
-                               Options="@costChartOptions">
+                               Height="350">
                         <ApexPointSeries TItem="DailyCostAnalysis"
                                          Items="DailyCostData"
                                          Name="Dynamic Tariff"
@@ -202,7 +203,7 @@ else
                 <div class="card-body">
                     <ApexChart TItem="DailyCostAnalysis"
                                Title="Daily Energy Consumption"
-                               Options="@consumptionChartOptions">
+                               Height="350">
                         <ApexPointSeries TItem="DailyCostAnalysis"
                                          Items="DailyCostData"
                                          Name="Daily Energy (kWh)"
@@ -262,21 +263,7 @@ else
 	private double TotalFixedCost { get; set; }
 	private double TotalSavings { get; set; }
 	private double SavingsPercentage { get; set; }
-	private double FixedPrice => Form?.FixedPrice ?? 0.25;
-	
-	private ApexChartOptions<DailyCostAnalysis> costChartOptions = new()
-	{
-		Chart = new Chart { Toolbar = new Toolbar { Show = false } },
-		Yaxis = new List<YAxis> { new YAxis { Title = new AxisTitle { Text = "Cost (€)" } } },
-		Xaxis = new XAxis { Title = new AxisTitle { Text = "Date" } }
-	};
-	
-	private ApexChartOptions<DailyCostAnalysis> consumptionChartOptions = new()
-	{
-		Chart = new Chart { Toolbar = new Toolbar { Show = false } },
-		Yaxis = new List<YAxis> { new YAxis { Title = new AxisTitle { Text = "Energy (kWh)" } } },
-		Xaxis = new XAxis { Title = new AxisTitle { Text = "Date" } }
-	}; 
+	private double FixedPrice => Form?.FixedPrice ?? 0.25; 
 
 	/// <summary>
 	/// This method is executed when the page is loaded!
