@@ -12,7 +12,7 @@ Mijn applicatie verwacht drie inputs:
 
 ![Input formulier](./input_fields_form.png "Inputvelden voor de analyse")
 
-De applicatie haalt vier soorten data op, maar ik gebruik vooral de **vermogensdata** omdat deze per uur laat zien hoeveel Watt er werd verbruikt. Door dit te combineren met dynamische prijzen kan ik exact berekenen wat het kost. Mijn verwachting was dat dynamisch goedkoper zou zijn omdat je kunt besparen door stroom te gebruiken wanneer het goedkoop is.
+De applicatie haalt vier soorten data op, maar ik gebruik vooral de **vermogensdata** omdat deze per uur laat zien hoeveel Watt er werd verbruikt. Door dit te combineren met dynamische prijzen kan ik exact berekenen wat het kost.
 
 ## Algoritme-ontwerp: Hoe werkt het?
 
@@ -27,7 +27,7 @@ Mijn algoritme volgt deze stappen:
 5. **Kosten berekenen**: Dynamisch gebruikt elk uur zijn specifieke prijs, vast gebruikt altijd dezelfde prijs
 6. **Totalen optellen** en besparing berekenen
 
-Deze aanpak klopt fysisch en gebruikt de échte dynamische prijzen uit de database.
+**Voorbeeld**: Een dag met 24 metingen van gemiddeld 800W per uur. Totale energie: 24 × 0.8 kWh = 19.2 kWh. Bij dynamisch tarief (gemiddeld €0.15/kWh): 19.2 × €0.15 = €2.88. Bij vast tarief (€0.25/kWh): 19.2 × €0.25 = €4.80. Besparing: €1.92 (40%). Bij piekuren (€0.35/kWh) zou vast juist goedkoper zijn.
 
 ## Resultaten: Wat zie je?
 
@@ -43,7 +43,7 @@ Je ziet direct de Watt-waarden per uur en de bijbehorende energieprijzen. Bijvoo
 
 ![Cost Analysis Charts](./cost_analysis_charts.png "Lijngrafiek kostenvergelijking en staafdiagram dagelijks verbruik")
 
-De lijngrafiek toont duidelijk dat het vaste tarief (groene lijn) consistent boven het dynamische tarief (blauwe lijn) ligt – dit betekent dat dynamisch goedkoper is. Het staafdiagram laat zien dat het dagelijks verbruik varieert, met pieken rond de 30 kWh op sommige dagen.
+De lijngrafiek toont dat het vaste tarief (groen) consistent boven het dynamische tarief (blauw) ligt. Het staafdiagram laat variërend dagelijks verbruik zien.
 
 **Kosten-overzicht** met de eindcijfers:
 
@@ -51,19 +51,23 @@ De lijngrafiek toont duidelijk dat het vaste tarief (groene lijn) consistent bov
 
 Voor 30 dagen zie je: €44.53 met dynamisch, €95.17 met vast tarief – een besparing van €50.64 (53.2%!).
 
-Wat opviel: deze besparingen van 53% zijn veel hoger dan mijn verwachte 10-20%. Dit komt omdat ik 30 dagen data heb gebruikt met grote prijsverschillen tussen dag en nacht. Aanvankelijk waren de kosten in de *miljoenen* – dat was een Watts/kilowatts bug die ik vond door sanity checks. Ook zag ik dat dynamisch niet altijd goedkoper is: op dagen met veel verbruik tijdens piekuren (zoals te zien om 06:00 met €0.234/kWh) kan vast voordeliger zijn.
+Wat opviel: besparingen van 53% zijn hoger dan verwacht (10-20%), door grote prijsverschillen dag/nacht. Aanvankelijk waren kosten in de *miljoenen* – een Watts/kW bug gevonden door sanity checks. Ook zag ik: dynamisch is niet altijd goedkoper bij veel verbruik tijdens piekuren (€0.234/kWh om 06:00).
 
 ## Acceptatiecriteria en testen
 
-De opdracht vroeg om een webpagina met naam, algoritme-beschrijving, resultaten, dagelijkse berekeningen, vergelijking dynamisch vs. vast, inputveld voor vaste prijs, en totalen. Dit heb ik allemaal gerealiseerd, plus extra's zoals grafieken en multi-huishouden support.
+De opdracht vroeg om webpagina met naam, algoritme-beschrijving, dagelijkse berekeningen, vergelijking en totalen. Alles gerealiseerd, plus grafieken en multi-huishouden support.
 
-Ik testte door handmatige verificatie (24 metingen narekenen), sanity checks (waarschuwingen bij onrealistisch verbruik), en variërende inputs (1, 7, 30 dagen met verschillende prijzen). Alles werkte correct. Onverwachte bevinding: dynamisch is niet automatisch altijd goedkoper – het hangt af van je verbruikspatroon.
+Ik testte door handmatige verificatie, sanity checks, en variërende inputs (1, 7, 30 dagen). Onverwachte bevinding: dynamisch is niet automatisch goedkoper.
 
-## Reflectie en verbetering
+## Reflectie per fase
 
-Als ik het opnieuw zou doen: flowchart eerder maken, beter testen met edge cases (Meter ID 0?), "top 5 goedkoopste uren" toevoegen, en meer comments bij LINQ-queries.
+**Ontwerpfase**: Ik begon direct met coderen zonder flowchart. Voordeel: snelle iteratie. Nadeel: onduidelijke structuur leidde tot de Watts/kW bug. Voor volgende projecten maak ik eerst visuele ontwerpen.
 
-Desondanks ben ik tevreden – het algoritme werkt, de UI is professioneel, en alle eisen zijn behaald.
+**Implementatiefase**: LINQ werkte perfect voor data-aggregatie, maar ik miste unit tests. De sanity checks (waarschuwingen bij >100 kWh/dag) redden me wel. Volgende keer: eerst tests schrijven, dan implementeren.
+
+**Testfase**: Handmatige verificatie werkte maar was tijdrovend. Geautomatiseerde tests zouden efficiënter zijn geweest. Het testen met verschillende periodes (1, 7, 30 dagen) hielp onverwachte patronen ontdekken.
+
+**Lessen**: Altijd flowchart vooraf, edge cases documenteren in requirements, en grafieken eerder toevoegen voor snellere validatie.
 
 ## Terugkijkend: Lost dit het probleem op?
 
